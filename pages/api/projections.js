@@ -1,18 +1,19 @@
 import clientPromise from "../../lib/mongodb";
 
 export default async (req, res) => {
+  console.log(req);
   try {
     const client = await clientPromise;
     const db = client.db("baseball");
 
-    const movies = await db
+    const projections = await db
       .collection("projections")
       .find({})
-      .sort({ metacritic: -1 })
-      .limit(10)
+      // .sort({ metacritic: -1 })
+      .limit(100)
       .toArray();
 
-    res.json(movies);
+    res.json(projections);
   } catch (e) {
     console.error(e);
   }
