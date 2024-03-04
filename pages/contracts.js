@@ -15,7 +15,7 @@ export async function getServerSideProps() {
     const hitters = await db
       .collection('projections')
       .find({})
-      .limit(700)
+      .limit(300)
       .toArray();
 
     return {
@@ -86,46 +86,64 @@ const TEAMS = [
   }
 ]
 
+TEAMS.sort((a, b) => {
+  if (a.name < b.name) {
+    return -1;
+  }
+  if (a.name > b.name) {
+    return 1;
+  }
+  return 0;
+});
+
 export default function Page({ contracts }) {
-  const [team, setTeam] = useState(TEAMS.sort((a, b) => {
-    if (a.name < b.name) {
-      return -1;
-    }
-    if (a.name > b.name) {
-      return 1;
-    }
-    return 0;
-  })[0])
+  const [team, setTeam] = useState(TEAMS[0].abbr);
+  const [years, setYears] = useState(1);
+
+  const handleSelect = (e) => {
+    console.log(e.target.value);
+    setTeam(e.target.value);
+  }
 
   return (
     <main>
       <div>
         <h1>Add Contract</h1>
+        <div>
+        <label htmlFor="team">Team</label>
         <select
           name="team"
           id="team"
           value={team}
-          onChange={e => setTeam(e.target.value)}
+          onChange={e => handleSelect(e)}
         >
           {TEAMS
-            .sort((a, b) => {
-              if (a.name < b.name) {
-                return -1;
-              }
-              if (a.name > b.name) {
-                return 1;
-              }
-              return 0;
-            })
             .map(team => (
               <option key={team.abbr} value={team.abbr}>{team.name}</option>
             ))}
         </select>
+        </div>
+        <label htmlFor="player">Player</label>
+        <input type="text" id="player"/>
+        <label htmlFor="years">Years</label>
+        <input  
+          type="number"
+          id="years"
+          min="1"
+          step="1"
+          value={years}
+          onChange={e => setYears(e.target.value)}
+        />
         <button
           onClick={() => {
-            console.log('submit');
+            console.log({
+              team,
+              years
+            });
           }}
-        ></button>
+        >
+          Submit
+        </button>
       </div>
       <div>
         {contracts.map(contract => {
