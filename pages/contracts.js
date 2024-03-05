@@ -1,9 +1,9 @@
 import clientPromise from "../lib/mongodb";
 import { useState } from 'react';
+import { Combobox } from "@headlessui/react";
 
 // todo select player from dropdown
 // todo clean up player list csv (python, pandas?)
-// todo clean up projection csv (python, pandas?)
 // todo determine simple database schema
 
 export async function getServerSideProps() {
@@ -20,13 +20,20 @@ export async function getServerSideProps() {
     const hitters = await db
       .collection('hitter_projections')
       .find({})
-      .limit(300)
+      .limit(400)
+      .toArray();
+
+    const pitchers = await db
+      .collection('pitcher_projections')
+      .find({})
+      .limit(400)
       .toArray();
 
     return {
-      props:{
+      props: {
         contracts: JSON.parse(JSON.stringify(contracts)),
-        hitters: JSON.parse(JSON.stringify(hitters))
+        hitters: JSON.parse(JSON.stringify(hitters)),
+        pitchers: JSON.parse(JSON.stringify(pitchers))
       },
     };
   } catch (e) {
@@ -34,7 +41,8 @@ export async function getServerSideProps() {
     return {
       props: {
         contracts: [],
-        hitters : []
+        hitters: [],
+        pitchers: [],
       }
     };
   }
@@ -101,9 +109,10 @@ TEAMS.sort((a, b) => {
   return 0;
 });
 
-export default function Page({ contracts }) {
+export default function Page({ contracts, hitters, pitchers }) {
   const [team, setTeam] = useState(TEAMS[0].abbr);
   const [years, setYears] = useState(1);
+  const [player, setPlayer] = useState(null);
 
   const handleSelect = (e) => {
     console.log(e.target.value);
@@ -115,23 +124,27 @@ export default function Page({ contracts }) {
       <div>
         <h1>Add Contract</h1>
         <div>
-        <label htmlFor="team">Team</label>
-        <select
-          name="team"
-          id="team"
-          value={team}
-          onChange={e => handleSelect(e)}
-        >
-          {TEAMS
-            .map(team => (
-              <option key={team.abbr} value={team.abbr}>{team.name}</option>
-            ))}
-        </select>
+          <label htmlFor="team">Team</label>
+          <select
+            name="team"
+            id="team"
+            value={team}
+            onChange={e => handleSelect(e)}
+          >
+            {TEAMS
+              .map(team => (
+                <option key={team.abbr} value={team.abbr}>{team.name}</option>
+              ))}
+          </select>
         </div>
-        <label htmlFor="player">Player</label>
-        <input type="text" id="player"/>
+        <PlayerSelect
+          hitters={hitters}
+          pitchers={pitchers}
+          handlePlayer={setPlayer}
+          player={player}
+        />
         <label htmlFor="years">Years</label>
-        <input  
+        <input
           type="number"
           id="years"
           min="1"
@@ -158,6 +171,62 @@ export default function Page({ contracts }) {
           )
         })}
       </div>
+      <div
+        style={{
+          display: 'flex'
+        }}
+      >
+
+        <div>
+          {pitchers.map(x => {
+            return (<div key={x.PlayerId}> {x.Name} {removeDiacritics(x.Name)} {x.Points}</div>)
+          })}
+        </div>
+        <div>
+          {hitters.map(x => {
+            return (<div key={x.PlayerId}> {x.Name} {removeDiacritics(x.Name)} {x.Points}</div>)
+          })}
+        </div>
+      </div>
     </main>
   );
+}
+
+const removeDiacritics = (str) => {
+  return str.normalize("NFD").toLowerCase().replace(/[\u0300-\u036f]/g, "")
+}
+
+const PlayerSelect = ({ hitters, pitchers, handlePlayer, player }) => {
+  // const [selectedPlayer, setSelectedPlayer] = useState('');
+  const [query, setQuery] = useState('');
+  // console.log(selectedPlayer);
+  const players = [...hitters, ...pitchers];
+  const filteredPlayers =
+    query === ''
+      ? players
+      : players.filter((player) => {
+        return removeDiacritics(player.Name).includes(query.toLowerCase())
+      });
+
+  const handleSelectedPlayer = (player) => {
+    console.log(player);
+    handlePlayer(player);
+  }
+
+  return (
+    <Combobox value={player} onChange={handleSelectedPlayer}>
+      <Combobox.Input
+        displayValue={player.Name}
+        onChange={(event) => setQuery(event.target.value)}
+      />
+      <Combobox.Options>
+        {filteredPlayers.map((player) => (
+          <Combobox.Option key={player.PlayerId} value={player}>
+            {player.Name}
+          </Combobox.Option>
+        ))}
+      </Combobox.Options>
+    </Combobox>
+  )
+
 }
