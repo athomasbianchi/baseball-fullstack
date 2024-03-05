@@ -7,7 +7,7 @@ export default async (req, res) => {
     const db = client.db("baseball");
 
     const projections = await db
-      .collection("projections")
+      .collection("pitcher_projections")
       .find({})
       // .sort({ metacritic: -1 })
       .limit(100)

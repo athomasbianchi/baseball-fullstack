@@ -1,6 +1,11 @@
 import clientPromise from "../lib/mongodb";
 import { useState } from 'react';
 
+// todo select player from dropdown
+// todo clean up player list csv (python, pandas?)
+// todo clean up projection csv (python, pandas?)
+// todo determine simple database schema
+
 export async function getServerSideProps() {
   try {
     const client = await clientPromise;
@@ -13,7 +18,7 @@ export async function getServerSideProps() {
       .toArray();
 
     const hitters = await db
-      .collection('projections')
+      .collection('hitter_projections')
       .find({})
       .limit(300)
       .toArray();
