@@ -3,7 +3,6 @@ import { useState } from 'react';
 import { Combobox } from "@headlessui/react";
 
 // todo select player from dropdown
-// todo clean up player list csv (python, pandas?)
 // todo determine simple database schema
 
 export async function getServerSideProps() {
@@ -20,13 +19,13 @@ export async function getServerSideProps() {
     const hitters = await db
       .collection('hitter_projections')
       .find({})
-      .limit(400)
+      .limit(700)
       .toArray();
 
     const pitchers = await db
       .collection('pitcher_projections')
       .find({})
-      .limit(400)
+      .limit(700)
       .toArray();
 
     return {
@@ -113,30 +112,43 @@ export default function Page({ contracts, hitters, pitchers }) {
   const [team, setTeam] = useState(TEAMS[0].abbr);
   const [years, setYears] = useState(1);
   const [player, setPlayer] = useState(null);
+  const [dollars, setDollars] = useState(1.00);
+  const [type, setType] = useState('contract')
 
-  const handleSelect = (e) => {
-    console.log(e.target.value);
-    setTeam(e.target.value);
+  const handleSubmit = () => {
+    console.log(team, years, player, dollars, type)
+    const data = {
+      team,
+      years,
+      Name: player.Name,
+      PlayerId: player.PlayerId,
+      dollars,
+      type
+    }
+
+    fetch(`../api/contract`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    })
+      .then(resp => console.log(resp.json()))
   }
 
   return (
     <main>
       <div>
         <h1>Add Contract</h1>
-        <div>
           <label htmlFor="team">Team</label>
           <select
             name="team"
             id="team"
             value={team}
-            onChange={e => handleSelect(e)}
+            onChange={(e) => setTeam(e.target.value)}
           >
             {TEAMS
               .map(team => (
                 <option key={team.abbr} value={team.abbr}>{team.name}</option>
               ))}
           </select>
-        </div>
         <PlayerSelect
           hitters={hitters}
           pitchers={pitchers}
@@ -152,13 +164,32 @@ export default function Page({ contracts, hitters, pitchers }) {
           value={years}
           onChange={e => setYears(e.target.value)}
         />
+        <label htmlFor="dollars">Dollars</label>
+        <input
+          type="number"
+          id="dollars"
+          min="1"
+          step=".01"
+          value={dollars}
+          onChange={e => setDollars(e.target.value)}
+        />
+        <label htmlFor="type">Type</label>
+        <select
+          name="type"
+          id="type"
+          value={type}
+          onChange={e => setType(e.target.value)}
+        >
+          <option key={'mlb'} value={'mlb'}>MLB</option>
+          <option key={'aa'} value={'aa'}>AA</option>
+          <option key={'aaa'} value={'aaa'}>AAA</option>
+          <option key={'rookie'} value={'rookie'}>@</option>
+          <option key={'arb1'} value={'arb1'}>Arb1</option>
+          <option key={'arb2'} value={'arb2'}>Arb2</option>
+          <option key={'arb3'} value={'arb3'}>Arb3</option>
+        </select>
         <button
-          onClick={() => {
-            console.log({
-              team,
-              years
-            });
-          }}
+          onClick={handleSubmit}
         >
           Submit
         </button>
@@ -179,12 +210,12 @@ export default function Page({ contracts, hitters, pitchers }) {
 
         <div>
           {pitchers.map(x => {
-            return (<div key={x.PlayerId}> {x.Name} {removeDiacritics(x.Name)} {x.Points}</div>)
+            return (<div key={x.PlayerId}> {x.Name} {x.POS} {x.Points}</div>)
           })}
         </div>
         <div>
           {hitters.map(x => {
-            return (<div key={x.PlayerId}> {x.Name} {removeDiacritics(x.Name)} {x.Points}</div>)
+            return (<div key={x.PlayerId}> {x.Name} {x.POS} {x.Points}</div>)
           })}
         </div>
       </div>
@@ -197,13 +228,14 @@ const removeDiacritics = (str) => {
 }
 
 const PlayerSelect = ({ hitters, pitchers, handlePlayer, player }) => {
+  console.log(player);
   // const [selectedPlayer, setSelectedPlayer] = useState('');
   const [query, setQuery] = useState('');
   // console.log(selectedPlayer);
   const players = [...hitters, ...pitchers];
   const filteredPlayers =
-    query === ''
-      ? players
+    query.length < 3
+      ? []
       : players.filter((player) => {
         return removeDiacritics(player.Name).includes(query.toLowerCase())
       });
@@ -215,8 +247,9 @@ const PlayerSelect = ({ hitters, pitchers, handlePlayer, player }) => {
 
   return (
     <Combobox value={player} onChange={handleSelectedPlayer}>
+      <Combobox.Label>Player</Combobox.Label>
       <Combobox.Input
-        displayValue={player.Name}
+        displayValue={(player) => player && player.Name}
         onChange={(event) => setQuery(event.target.value)}
       />
       <Combobox.Options>
