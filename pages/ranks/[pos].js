@@ -29,7 +29,7 @@ export default function Page() {
       {players.map((player, i) => {
         return (
           <div
-            key={player.PlayerId}
+            key={player.FangraphsId}
             style={{
               display: 'flex',
               justifyContent: 'flex-start'
@@ -44,19 +44,39 @@ export default function Page() {
             <div
               style={{ width: '170px' }}
             >
-              <a
-                href={`http://www.fangraphs.com/statss.aspx?playerid=${player.PlayerId}`}
-                target='_blank'
-              >
-                {player.Name}
-              </a>
+              {player.Name}
+            </div>
+            <div
+              style={{ width: '50px' }}
+            >
+              {player.Team}
             </div>
             <div
               style={{ width: '150px' }}
-            >{player.POS}</div>
+            >
+              {player.POS}
+            </div>
             <div
-              style={{ width: '50px' }}
-            >{player.Team}</div>
+              style={{ width: '40px' }}
+            >
+              <a
+                href={`http://www.fangraphs.com/statss.aspx?PlayerId=${player.FangraphsId}`}
+                target='_blank'
+              >
+                FG
+              </a>
+            </div>
+            <div
+              style={{ width: '40px' }}
+            >
+              <a
+                href={`https://www.mlb.com/player/${player.MLBId}`}
+                target="_blank"
+              >
+                MLB
+
+              </a>
+            </div>
             <div
               style={{ width: '50px', textAlign: 'right' }}
             >{fn(player.Points)}</div>

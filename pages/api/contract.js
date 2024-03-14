@@ -6,18 +6,17 @@ export default async (req, res) => {
     try {
       const client = await clientPromise;
       const db = client.db("baseball");
-      console.log(req.body)
-      const { team, Name, PlayerId, dollars, type, years} = JSON.parse(req.body);
+      const { team, Name, FangraphsId, dollars, type, years} = JSON.parse(req.body);
       await db
         .collection("contracts")
         .insertOne({
           team: team,
           Name: Name,
-          PlayerId: PlayerId,
+          FangraphsId: FangraphsId,
           years: years,
           dollars: dollars,
           type: type
-        })
+        });
 
       res.status(201).json({ message: 'worked' })
     } catch (e) {
@@ -27,6 +26,4 @@ export default async (req, res) => {
   } else {
     res.status(300).json({ message: 'no other methods yet'})
   }
-
-
 };
