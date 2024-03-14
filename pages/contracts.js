@@ -29,11 +29,18 @@ export async function getServerSideProps() {
       .limit(700)
       .toArray();
 
+    const prospects = await db
+      .collection('prospects')
+      .find({})
+      .limit(500)
+      .toArray();
+
     return {
       props: {
         contracts: JSON.parse(JSON.stringify(contracts)),
         hitters: JSON.parse(JSON.stringify(hitters)),
-        pitchers: JSON.parse(JSON.stringify(pitchers))
+        pitchers: JSON.parse(JSON.stringify(pitchers)),
+        prospects: JSON.parse(JSON.stringify(prospects)),
       },
     };
   } catch (e) {
@@ -43,12 +50,13 @@ export async function getServerSideProps() {
         contracts: [],
         hitters: [],
         pitchers: [],
+        prospects: []
       }
     };
   }
 }
 
-export default function Page({ contracts, hitters, pitchers }) {
+export default function Page({ contracts, hitters, pitchers, prospects }) {
   const [team, setTeam] = useState(TEAMS[0].abbr);
   const [years, setYears] = useState(1);
   const [player, setPlayer] = useState(null);
@@ -72,8 +80,10 @@ export default function Page({ contracts, hitters, pitchers }) {
     }).then(resp => console.log(resp.json()))
   }
 
+  // TODO change form based on contract type (options for AA)
   return (
     <main>
+
       <div>
         <h1>Add Contract</h1>
         <label htmlFor="team">Team</label>
@@ -91,6 +101,7 @@ export default function Page({ contracts, hitters, pitchers }) {
         <PlayerSelect
           hitters={hitters}
           pitchers={pitchers}
+          prospects={prospects}
           handlePlayer={setPlayer}
           player={player}
         />
@@ -151,12 +162,17 @@ export default function Page({ contracts, hitters, pitchers }) {
 
         <div>
           {pitchers.map(x => {
-            return (<div key={x.FangraphsId}> {x.Name} {x.POS} {x.Points}</div>)
+            return (<div key={x.FangraphsId}> {x.Name} {x.POS}</div>)
           })}
         </div>
         <div>
           {hitters.map(x => {
-            return (<div key={x.FangraphsId}> {x.Name} {x.POS} {x.Points}</div>)
+            return (<div key={x.FangraphsId}> {x.Name} {x.POS}</div>)
+          })}
+        </div>
+        <div>
+          {prospects.map((x,i) => {
+            return (<div key={i}>{x.Name} {x.POS} {x.FangraphsId}</div>)
           })}
         </div>
       </div>
@@ -168,12 +184,12 @@ const removeDiacritics = (str) => {
   return str.normalize("NFD").toLowerCase().replace(/[\u0300-\u036f]/g, "")
 }
 
-const PlayerSelect = ({ hitters, pitchers, handlePlayer, player }) => {
+const PlayerSelect = ({ hitters, pitchers, prospects, handlePlayer, player }) => {
   console.log(player);
   // const [selectedPlayer, setSelectedPlayer] = useState('');
   const [query, setQuery] = useState('');
   // console.log(selectedPlayer);
-  const players = [...hitters, ...pitchers];
+  const players = [...hitters, ...pitchers, ...prospects];
   const filteredPlayers =
     query.length < 3
       ? []

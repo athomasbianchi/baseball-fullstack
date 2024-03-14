@@ -63,3 +63,7 @@ export const TEAM_LOOKUP = {
   'cr': 'Cheating Raiders',
   'bs': 'Bayou Shooters'
 }
+
+// export const teamURLS = {
+
+// }
